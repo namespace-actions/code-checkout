@@ -1,0 +1,44 @@
+name: Test
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run check
+      - run: npm run build
+      - run: git diff --exit-code -- dist
+  snapshot:
+    runs-on: nscloud-ubuntu-26.04-amd64-8x16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: action
+      - uses: ./action
+        with:
+          path: source
+      - name: Verify checked-out commit and files
+        working-directory: source
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -f action.yml
+      - uses: ./action
+        with:
+          path: cached
+      - name: Verify checkout with cached nsgit
+        working-directory: cached
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"

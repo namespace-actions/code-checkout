@@ -1,0 +1,20 @@
+name: Namespace Code Checkout
+description: Check out a GitHub repository using Namespace Git snapshots.
+author: Namespace Labs
+branding:
+  icon: download-cloud
+  color: purple
+inputs:
+  repository:
+    description: Repository in owner/name form. Defaults to the workflow repository.
+    default: ${{ github.repository }}
+  ref:
+    description: Commit, branch, or tag. Defaults to the workflow SHA for the workflow repository, otherwise the repository's default branch.
+  path:
+    description: Checkout directory relative to GITHUB_WORKSPACE. Must be absent or empty.
+    default: .
+  additional-refs:
+    description: Additional refs to include in the snapshot, one per line.
+runs:
+  using: node24
+  main: dist/main/index.js
