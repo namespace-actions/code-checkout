@@ -14,7 +14,7 @@ async function run(): Promise<void> {
     workspace: process.env.GITHUB_WORKSPACE || "",
   });
   const executable = await installNsgit(await latestRelease());
-  await exec(executable, args);
+  await exec(`"${executable}"`, args);
 }
 
 run().catch((error: unknown) => {

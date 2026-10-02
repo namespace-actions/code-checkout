@@ -35159,7 +35159,7 @@ async function latestRelease() {
     return (await response.json());
 }
 function selectTarball(release, platform, architecture) {
-    const os = { linux: "LINUX", darwin: "DARWIN" }[platform];
+    const os = { linux: "LINUX", darwin: "DARWIN", win32: "WINDOWS" }[platform];
     const arch = { x64: "AMD64", arm64: "ARM64" }[architecture];
     if (!os || !arch) {
         throw new Error(`Unsupported runner platform: ${platform}/${architecture}`);
@@ -35182,6 +35182,7 @@ function selectTarball(release, platform, architecture) {
 async function installNsgit(release) {
     const tarball = selectTarball(release, process.platform, process.arch);
     const version = release.version.replace(/^v/, "");
+    const executableName = process.platform === "win32" ? "nsgit.exe" : "nsgit";
     let directory = find("nsgit", version, process.arch);
     if (directory) {
         info(`Using cached nsgit ${version}`);
@@ -35198,8 +35199,10 @@ async function installNsgit(release) {
                 throw new Error("nsgit archive checksum mismatch");
             }
             extracted = await extractTar(archive);
-            await (0,promises_namespaceObject.chmod)(external_node_path_namespaceObject.join(extracted, "nsgit"), 0o755);
-            directory = await cacheFile(external_node_path_namespaceObject.join(extracted, "nsgit"), "nsgit", "nsgit", version, process.arch);
+            const executable = external_node_path_namespaceObject.join(extracted, executableName);
+            if (process.platform !== "win32")
+                await (0,promises_namespaceObject.chmod)(executable, 0o755);
+            directory = await cacheFile(executable, executableName, "nsgit", version, process.arch);
         }
         finally {
             await (0,promises_namespaceObject.rm)(archive, { force: true });
@@ -35208,7 +35211,7 @@ async function installNsgit(release) {
         }
     }
     addPath(directory);
-    return external_node_path_namespaceObject.join(directory, "nsgit");
+    return external_node_path_namespaceObject.join(directory, executableName);
 }
 
 ;// CONCATENATED MODULE: ./src/main.ts
@@ -35227,7 +35230,7 @@ async function run() {
         workspace: process.env.GITHUB_WORKSPACE || "",
     });
     const executable = await installNsgit(await latestRelease());
-    await exec_exec(executable, args);
+    await exec_exec(`"${executable}"`, args);
 }
 run().catch((error) => {
     setFailed(error instanceof Error ? error.message : String(error));

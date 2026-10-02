@@ -2,7 +2,7 @@
 
 Check out a GitHub repository using [Namespace Git snapshots](https://namespace.so/docs/git-snapshots). Snapshots reuse prepared Git data and working trees across jobs instead of fetching and checking out the repository each time.
 
-Requires a Namespace Linux or macOS runner (x64 or arm64), Git snapshots enabled for your workspace, and a [GitHub association](https://cloud.namespace.so/workspace/workspace/integrations) with read access to the target repository. The action uses the runner's Namespace credentials; no GitHub token input or separate login step is needed.
+Requires a Namespace Linux, macOS, or Windows runner (x64 or arm64), Git snapshots enabled for your workspace, and a [GitHub association](https://cloud.namespace.so/workspace/workspace/integrations) with read access to the target repository. The action uses the runner's Namespace credentials; no GitHub token input or separate login step is needed.
 
 ```yaml
 jobs:
@@ -44,7 +44,7 @@ The action resolves the latest published `nsgit` release, verifies its SHA-256 c
 
 For pull requests, the default is GitHub's workflow SHA (normally the merge commit), just like the documented shell example. Set `ref: ${{ github.event.pull_request.head.sha }}` to check out the head commit instead, provided the configured repository contains it.
 
-This is not a full replacement for every `actions/checkout` option. It does not clean a nonempty destination, persist GitHub credentials, or expose submodule, LFS, sparse-checkout, or fetch-depth settings. GitHub Enterprise and Windows runners are not supported. Git snapshot/authentication failures fail the step; there is no fallback to a direct Git clone.
+This is not a full replacement for every `actions/checkout` option. It does not clean a nonempty destination, persist GitHub credentials, or expose submodule, LFS, sparse-checkout, or fetch-depth settings. GitHub Enterprise is not supported. Git snapshot/authentication failures fail the step; there is no fallback to a direct Git clone.
 
 ## Development
 

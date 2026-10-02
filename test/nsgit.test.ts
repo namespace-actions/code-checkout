@@ -30,6 +30,12 @@ test("selects the correct archive for each supported OS and architecture", () =>
         url: "https://get.namespace.so/linux_arm64.tar.gz",
         sha256: "d".repeat(64),
       },
+      {
+        os: "WINDOWS",
+        arch: "AMD64",
+        url: "https://get.namespace.so/windows_amd64.tar.gz",
+        sha256: "e".repeat(64),
+      },
     ],
   };
   assert.equal(selectTarball(release, "linux", "x64").sha256, "b".repeat(64));
@@ -39,7 +45,8 @@ test("selects the correct archive for each supported OS and architecture", () =>
     selectTarball(release, "darwin", "arm64").sha256,
     "a".repeat(64),
   );
-  assert.throws(() => selectTarball(release, "win32", "x64"), /Unsupported/);
+  assert.equal(selectTarball(release, "win32", "x64").sha256, "e".repeat(64));
+  assert.throws(() => selectTarball(release, "freebsd", "x64"), /Unsupported/);
   assert.throws(() => selectTarball(release, "linux", "ia32"), /Unsupported/);
   assert.throws(
     () => selectTarball({ ...release, version: "../../1" }, "linux", "x64"),

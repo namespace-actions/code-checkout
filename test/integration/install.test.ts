@@ -44,7 +44,7 @@ test("real download, checksum rejection, executable install, and cache reuse", a
       "nsgit",
       release.version.replace(/^v/, ""),
       process.arch,
-      "nsgit",
+      process.platform === "win32" ? "nsgit.exe" : "nsgit",
     ),
   );
   assert.match(
