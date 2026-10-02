@@ -40,7 +40,7 @@ export function selectTarball(
   platform: string,
   architecture: string,
 ): Tarball {
-  const os = { linux: "LINUX", darwin: "DARWIN" }[platform];
+  const os = { linux: "LINUX", darwin: "DARWIN", win32: "WINDOWS" }[platform];
   const arch = { x64: "AMD64", arm64: "ARM64" }[architecture];
   if (!os || !arch) {
     throw new Error(`Unsupported runner platform: ${platform}/${architecture}`);
@@ -70,6 +70,7 @@ export function selectTarball(
 export async function installNsgit(release: Release): Promise<string> {
   const tarball = selectTarball(release, process.platform, process.arch);
   const version = release.version.replace(/^v/, "");
+  const executableName = process.platform === "win32" ? "nsgit.exe" : "nsgit";
   let directory = tc.find("nsgit", version, process.arch);
   if (directory) {
     core.info(`Using cached nsgit ${version}`);
@@ -86,10 +87,11 @@ export async function installNsgit(release: Release): Promise<string> {
         throw new Error("nsgit archive checksum mismatch");
       }
       extracted = await tc.extractTar(archive);
-      await chmod(path.join(extracted, "nsgit"), 0o755);
+      const executable = path.join(extracted, executableName);
+      if (process.platform !== "win32") await chmod(executable, 0o755);
       directory = await tc.cacheFile(
-        path.join(extracted, "nsgit"),
-        "nsgit",
+        executable,
+        executableName,
         "nsgit",
         version,
         process.arch,
@@ -100,5 +102,5 @@ export async function installNsgit(release: Release): Promise<string> {
     }
   }
   core.addPath(directory);
-  return path.join(directory, "nsgit");
+  return path.join(directory, executableName);
 }

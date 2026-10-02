@@ -8,7 +8,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -42,3 +42,41 @@ jobs:
       - name: Verify checkout with cached nsgit
         working-directory: cached
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+  snapshot-windows:
+    runs-on: nscloud-windows-2022-amd64-8x16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: action
+      - uses: ./action
+        with:
+          path: source
+      - name: Verify checked-out commit and files
+        working-directory: source
+        run: |
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw "Unexpected checkout commit" }
+          if (!(Test-Path action.yml)) { throw "Expected repository files" }
+      - uses: ./action
+        with:
+          path: cached
+      - name: Verify checkout with cached nsgit
+        working-directory: cached
+        run: if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw "Unexpected cached checkout commit" }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify checkout into the default workspace
+        shell: pwsh
+        run: |
+          $actionPath = Join-Path $env:RUNNER_TEMP "code-checkout"
+          New-Item -ItemType Directory -Path $actionPath | Out-Null
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\action\dist" -Destination $actionPath -Recurse
+          Get-ChildItem -LiteralPath $env:GITHUB_WORKSPACE -Force | Remove-Item -Recurse -Force
+          $env:INPUT_REPOSITORY = $env:GITHUB_REPOSITORY
+          $env:INPUT_REF = $env:GITHUB_SHA
+          $env:INPUT_PATH = "."
+          $env:RUNNER_TOOL_CACHE = Join-Path $env:RUNNER_TEMP "tool cache"
+          node (Join-Path $actionPath "dist\main\index.js")
+          if ($LASTEXITCODE -ne 0) { throw "Bundled action failed" }
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw "Unexpected default-path checkout commit" }
+          if (!(Test-Path action.yml)) { throw "Expected repository files in the default workspace" }
