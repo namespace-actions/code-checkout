@@ -2,7 +2,7 @@
 
 Check out a GitHub repository using [Namespace Git snapshots](https://namespace.so/docs/git-snapshots). Snapshots reuse prepared Git data and working trees across jobs instead of fetching and checking out the repository each time.
 
-Requires a Namespace Linux, macOS, or Windows runner (x64 or arm64), Git snapshots enabled for your workspace, and a [GitHub association](https://cloud.namespace.so/workspace/workspace/integrations) with read access to the target repository. The action uses the runner's Namespace credentials; no GitHub token input or separate login step is needed.
+Requires a Namespace Linux, macOS, or Windows runner (x64 or arm64), Git snapshots enabled for your workspace, and a [GitHub association](https://cloud.namespace.so/workspace/workspace/integrations) with read access to the target repository. By default, the action uses the runner's Namespace credentials; no GitHub token input or separate login step is needed.
 
 ```yaml
 jobs:
@@ -45,6 +45,39 @@ The action resolves the latest published `nsgit` release, verifies its SHA-256 c
 For pull requests, the default is GitHub's workflow SHA (normally the merge commit), just like the documented shell example. Set `ref: ${{ github.event.pull_request.head.sha }}` to check out the head commit instead, provided the configured repository contains it.
 
 This is not a full replacement for every `actions/checkout` option. It does not clean a nonempty destination, persist GitHub credentials, or expose submodule, LFS, sparse-checkout, or fetch-depth settings. GitHub Enterprise is not supported. Git snapshot/authentication failures fail the step; there is no fallback to a direct Git clone.
+
+## Check out multiple private repositories
+
+The runner's default checkout credentials are scoped to the repository that triggered the workflow. To check out multiple private repositories, create a Namespace token with read access to each repository and pass its bearer token as `NSGIT_CHECKOUT_TOKEN`.
+
+The GitHub association must allow Namespace to read every target repository. A checkout token does not expand the association's access. Create the token in the same Namespace workspace as the runners and GitHub association.
+
+The token needs one `code/repository:read` grant per repository and an `ingress:*:access` grant for the snapshot service. Use the canonical HTTPS repository URL, including `.git`, as the resource ID, or `*` to allow all repositories. The runner's Namespace credentials still provision the snapshot service.
+
+Store the bearer token as a GitHub Actions secret named `NSGIT_CHECKOUT_TOKEN`. Do not commit it to the workflow or print it in job logs. Use one action step per repository and distinct destination paths:
+
+```yaml
+jobs:
+  test:
+    runs-on: nscloud-ubuntu-26.04-amd64-8x16
+    steps:
+      - uses: namespace-actions/code-checkout@main
+        env:
+          NSGIT_CHECKOUT_TOKEN: ${{ secrets.NSGIT_CHECKOUT_TOKEN }}
+        with:
+          repository: acme/application
+          ref: main
+          path: application
+      - uses: namespace-actions/code-checkout@main
+        env:
+          NSGIT_CHECKOUT_TOKEN: ${{ secrets.NSGIT_CHECKOUT_TOKEN }}
+        with:
+          repository: acme/shared
+          ref: main
+          path: shared
+```
+
+See the [multi-repository checkout guide](https://namespace.so/docs/solutions/github-actions/git-snapshots#check-out-multiple-private-repositories) for token creation and revocation. For checkouts without Git snapshots, use [`nsgit clone --kind direct`](https://namespace.so/docs/solutions/github-actions/git-snapshots#use-nsgit-without-git-snapshots) instead of this action.
 
 ## Development
 
