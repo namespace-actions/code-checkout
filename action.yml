@@ -13,6 +13,8 @@ inputs:
   path:
     description: Checkout directory relative to GITHUB_WORKSPACE. Must be absent or empty.
     default: .
+  depth:
+    description: Git history depth. Leave empty to use the nsgit default; 0 fetches full history. Depths above 1 require a Git clone mechanism.
   additional-refs:
     description: Additional refs to include in the snapshot, one per line.
 runs:

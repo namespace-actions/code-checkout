@@ -5,6 +5,7 @@ interface CheckoutOptions {
   repository: string;
   ref: string;
   path: string;
+  depth: string;
   additionalRefs: string[];
   workflowRepository: string;
   workflowSha: string;
@@ -54,6 +55,15 @@ export async function checkoutArgs(
     throw new Error("GITHUB_SHA or an explicit ref is required");
   }
   const args = ["clone"];
+  if (options.depth !== "") {
+    if (
+      !/^\d+$/.test(options.depth) ||
+      !Number.isSafeInteger(Number(options.depth))
+    ) {
+      throw new Error("depth must be a non-negative integer");
+    }
+    args.push("--depth", String(Number(options.depth)));
+  }
   for (const additionalRef of options.additionalRefs) {
     args.push("--additional_ref", additionalRef);
   }
