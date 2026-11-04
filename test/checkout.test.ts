@@ -21,6 +21,7 @@ test("checkout arguments and workspace boundaries", async (t) => {
     repository: "",
     ref: "",
     path: ".",
+    depth: "",
     additionalRefs: [],
     workflowRepository: "acme/project",
     workflowSha: "1234567890abcdef1234567890abcdef12345678",
@@ -72,6 +73,27 @@ test("checkout arguments and workspace boundaries", async (t) => {
       path.join(workspace, "source tree"),
     ],
   );
+  for (const [depth, expected] of [
+    ["0", "0"],
+    ["2", "2"],
+    ["010", "10"],
+    ["08", "8"],
+  ]) {
+    assert.deepEqual(await checkoutArgs({ ...options, depth }), [
+      "clone",
+      "--depth",
+      expected,
+      "--",
+      "github.com/acme/project@1234567890abcdef1234567890abcdef12345678",
+      workspace,
+    ]);
+  }
+  for (const depth of ["-1", "1.5", "abc", "1e2", "9007199254740992"]) {
+    await assert.rejects(
+      checkoutArgs({ ...options, depth }),
+      /depth must be a non-negative integer/,
+    );
+  }
   await assert.rejects(
     checkoutArgs({ ...options, workflowSha: "" }),
     /GITHUB_SHA/,

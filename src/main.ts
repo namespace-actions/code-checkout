@@ -8,6 +8,7 @@ async function run(): Promise<void> {
     repository: core.getInput("repository"),
     ref: core.getInput("ref"),
     path: core.getInput("path") || ".",
+    depth: core.getInput("depth"),
     additionalRefs: core.getMultilineInput("additional-refs"),
     workflowRepository: process.env.GITHUB_REPOSITORY || "",
     workflowSha: process.env.GITHUB_SHA || "",

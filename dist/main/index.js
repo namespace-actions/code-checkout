@@ -34320,6 +34320,13 @@ async function checkoutArgs(options) {
         throw new Error("GITHUB_SHA or an explicit ref is required");
     }
     const args = ["clone"];
+    if (options.depth !== "") {
+        if (!/^\d+$/.test(options.depth) ||
+            !Number.isSafeInteger(Number(options.depth))) {
+            throw new Error("depth must be a non-negative integer");
+        }
+        args.push("--depth", String(Number(options.depth)));
+    }
     for (const additionalRef of options.additionalRefs) {
         args.push("--additional_ref", additionalRef);
     }
@@ -35224,6 +35231,7 @@ async function run() {
         repository: getInput("repository"),
         ref: getInput("ref"),
         path: getInput("path") || ".",
+        depth: getInput("depth"),
         additionalRefs: getMultilineInput("additional-refs"),
         workflowRepository: process.env.GITHUB_REPOSITORY || "",
         workflowSha: process.env.GITHUB_SHA || "",
