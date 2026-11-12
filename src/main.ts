@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
 import { checkoutArgs } from "./checkout.js";
-import { installNsgit, latestRelease } from "./nsgit.js";
+import { installNsgit, resolveRelease } from "./nsgit.js";
 
 async function run(): Promise<void> {
   const args = await checkoutArgs({
@@ -14,7 +14,9 @@ async function run(): Promise<void> {
     workflowSha: process.env.GITHUB_SHA || "",
     workspace: process.env.GITHUB_WORKSPACE || "",
   });
-  const executable = await installNsgit(await latestRelease());
+  const executable = await installNsgit(
+    await resolveRelease(core.getInput("nsgit-version", { required: true })),
+  );
   await exec(`"${executable}"`, args);
 }
 

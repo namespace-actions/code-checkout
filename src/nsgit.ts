@@ -17,22 +17,59 @@ export interface Release {
   tarballs: Tarball[];
 }
 
-export async function latestRelease(): Promise<Release> {
-  const response = await fetch(
-    "https://private-api.global.namespaceapis.com/nsl.versions.VersionsService/GetLatest",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nsgit: {} }),
-      signal: AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok) {
+export async function resolveRelease(version: string): Promise<Release> {
+  if (version === "latest") {
+    const response = await fetch(
+      "https://private-api.global.namespaceapis.com/nsl.versions.VersionsService/GetLatest",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nsgit: {} }),
+        signal: AbortSignal.timeout(30_000),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        `Failed to resolve latest nsgit release: HTTP ${response.status}`,
+      );
+    }
+    return (await response.json()) as Release;
+  }
+  if (!/^v?\d+\.\d+\.\d+$/.test(version)) {
     throw new Error(
-      `Failed to resolve latest nsgit release: HTTP ${response.status}`,
+      "nsgit-version must be latest or an exact version such as v0.1.53",
     );
   }
-  return (await response.json()) as Release;
+  const tag = `v${version.replace(/^v/, "")}`;
+  const baseURL = `https://get.namespace.so/packages/nsgit/${tag}`;
+  const response = await fetch(`${baseURL}/nsgit.json`, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to resolve nsgit ${tag}: HTTP ${response.status}`);
+  }
+  const manifest = (await response.json()) as {
+    tool: string;
+    version: string;
+    artifacts: {
+      filename: string;
+      os: string;
+      arch: string;
+      sha256: string;
+    }[];
+  };
+  if (manifest.tool !== "nsgit" || manifest.version !== tag) {
+    throw new Error(`Unexpected release manifest for nsgit ${tag}`);
+  }
+  return {
+    version: tag,
+    tarballs: manifest.artifacts.map((artifact) => ({
+      os: artifact.os,
+      arch: artifact.arch,
+      url: `${baseURL}/${artifact.filename}`,
+      sha256: artifact.sha256,
+    })),
+  };
 }
 
 export function selectTarball(
