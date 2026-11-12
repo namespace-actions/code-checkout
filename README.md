@@ -21,7 +21,7 @@ By default, this is equivalent to:
 nsgit clone "github.com/$GITHUB_REPOSITORY@$GITHUB_SHA" "$GITHUB_WORKSPACE"
 ```
 
-The action defaults to `nsgit` version `v0.1.53`. Set `nsgit-version` to another exact release to override it; the `v` prefix is optional. Set `nsgit-version: latest` to opt into the latest published release on each invocation. Version ranges are not supported. A missing release fails the step rather than selecting a different version.
+The action defaults to `nsgit` version `v0.1.54`. Set `nsgit-version` to another exact release to override it; the `v` prefix is optional. Set `nsgit-version: latest` to opt into the latest published release on each invocation. Version ranges are not supported. A missing release fails the step rather than selecting a different version.
 
 The action verifies the release's SHA-256 checksum before extraction and installs the executable in the GitHub Actions tool cache (`RUNNER_TOOL_CACHE/nsgit/<version>/<architecture>`). Later invocations reuse the cached version. `nsgit` is also added to `PATH`. Cache persistence across jobs depends on the runner's tool-cache configuration; this action does not upload or restore an Actions cache archive.
 
@@ -29,7 +29,7 @@ The action verifies the release's SHA-256 checksum before extraction and install
 
 | Input             | Default                                                                                    | Description                                                                                                                 |
 | ----------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `nsgit-version`   | `v0.1.53`                                                                                  | Exact release to install (the `v` prefix is optional), or `latest`.                                                         |
+| `nsgit-version`   | `v0.1.54`                                                                                  | Exact release to install (the `v` prefix is optional), or `latest`.                                                         |
 | `repository`      | `${{ github.repository }}`                                                                 | GitHub repository in `owner/name` form.                                                                                     |
 | `ref`             | Workflow SHA for the workflow repository; otherwise the target repository's default branch | Commit, branch, or tag to check out. Use a commit SHA for reproducibility.                                                  |
 | `path`            | `.`                                                                                        | Destination relative to `GITHUB_WORKSPACE`. Must be absent or empty and stay inside the workspace.                          |
