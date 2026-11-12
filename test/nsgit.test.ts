@@ -1,6 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { selectTarball } from "../src/nsgit.js";
+import { resolveRelease, selectTarball } from "../src/nsgit.js";
+
+test("rejects version ranges and paths", async () => {
+  for (const version of [
+    "",
+    "v0.1",
+    "^0.1.53",
+    "0.1.x",
+    "../latest",
+    "v0.1.53/other",
+  ]) {
+    await assert.rejects(
+      resolveRelease(version),
+      /nsgit-version must be latest or an exact version/,
+    );
+  }
+});
 
 test("selects the correct archive for each supported OS and architecture", () => {
   const release = {

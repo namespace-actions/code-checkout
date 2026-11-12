@@ -13,7 +13,7 @@ jobs:
       - run: go test ./...
 ```
 
-Pin the action to a full commit SHA for reproducible workflows. Versioned releases are not published yet.
+Pin the action to a full commit SHA for reproducible workflows. Each action revision defaults to a fixed `nsgit` release. Versioned action releases are not published yet.
 
 By default, this is equivalent to:
 
@@ -21,12 +21,15 @@ By default, this is equivalent to:
 nsgit clone "github.com/$GITHUB_REPOSITORY@$GITHUB_SHA" "$GITHUB_WORKSPACE"
 ```
 
-The action resolves the latest published `nsgit` release, verifies its SHA-256 checksum before extraction, and installs the executable in the GitHub Actions tool cache (`RUNNER_TOOL_CACHE/nsgit/<version>/<architecture>`). Later invocations reuse the cached version. `nsgit` is also added to `PATH`. Cache persistence across jobs depends on the runner's tool-cache configuration; this action does not upload or restore an Actions cache archive.
+The action defaults to `nsgit` version `v0.1.53`. Set `nsgit-version` to another exact release to override it; the `v` prefix is optional. Set `nsgit-version: latest` to opt into the latest published release on each invocation. Version ranges are not supported. A missing release fails the step rather than selecting a different version.
+
+The action verifies the release's SHA-256 checksum before extraction and installs the executable in the GitHub Actions tool cache (`RUNNER_TOOL_CACHE/nsgit/<version>/<architecture>`). Later invocations reuse the cached version. `nsgit` is also added to `PATH`. Cache persistence across jobs depends on the runner's tool-cache configuration; this action does not upload or restore an Actions cache archive.
 
 ## Inputs
 
 | Input             | Default                                                                                    | Description                                                                                                                 |
 | ----------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `nsgit-version`   | `v0.1.53`                                                                                  | Exact release to install (the `v` prefix is optional), or `latest`.                                                         |
 | `repository`      | `${{ github.repository }}`                                                                 | GitHub repository in `owner/name` form.                                                                                     |
 | `ref`             | Workflow SHA for the workflow repository; otherwise the target repository's default branch | Commit, branch, or tag to check out. Use a commit SHA for reproducibility.                                                  |
 | `path`            | `.`                                                                                        | Destination relative to `GITHUB_WORKSPACE`. Must be absent or empty and stay inside the workspace.                          |
@@ -36,6 +39,7 @@ The action resolves the latest published `nsgit` release, verifies its SHA-256 c
 ```yaml
 - uses: namespace-actions/code-checkout@main
   with:
+    nsgit-version: v0.1.53
     ref: ${{ github.sha }}
     path: source
     depth: 2
@@ -93,4 +97,4 @@ npm run check
 npm run build
 ```
 
-The integration test downloads the real published `nsgit`, checks checksum rejection and cache reuse, and executes the installed binary. The snapshot workflow additionally checks out a real repository on a Namespace runner. Commit the generated JavaScript bundle in `dist/main` with source changes so consumers do not need to install dependencies.
+The integration test resolves pinned and latest `nsgit` releases, checks version selection, missing-release failure, checksum rejection and cache reuse, and executes the installed binaries. The snapshot workflow additionally checks out a real repository on a Namespace runner. Commit the generated JavaScript bundle in `dist/main` with source changes so consumers do not need to install dependencies.

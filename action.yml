@@ -5,6 +5,9 @@ branding:
   icon: download-cloud
   color: purple
 inputs:
+  nsgit-version:
+    description: Exact nsgit release to install (the v prefix is optional), or latest.
+    default: v0.1.53
   repository:
     description: Repository in owner/name form. Defaults to the workflow repository.
     default: ${{ github.repository }}

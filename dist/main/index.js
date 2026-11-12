@@ -35153,17 +35153,43 @@ const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import
 
 
 
-async function latestRelease() {
-    const response = await fetch("https://private-api.global.namespaceapis.com/nsl.versions.VersionsService/GetLatest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nsgit: {} }),
+async function resolveRelease(version) {
+    if (version === "latest") {
+        const response = await fetch("https://private-api.global.namespaceapis.com/nsl.versions.VersionsService/GetLatest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nsgit: {} }),
+            signal: AbortSignal.timeout(30_000),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to resolve latest nsgit release: HTTP ${response.status}`);
+        }
+        return (await response.json());
+    }
+    if (!/^v?\d+\.\d+\.\d+$/.test(version)) {
+        throw new Error("nsgit-version must be latest or an exact version such as v0.1.53");
+    }
+    const tag = `v${version.replace(/^v/, "")}`;
+    const baseURL = `https://get.namespace.so/packages/nsgit/${tag}`;
+    const response = await fetch(`${baseURL}/nsgit.json`, {
         signal: AbortSignal.timeout(30_000),
     });
     if (!response.ok) {
-        throw new Error(`Failed to resolve latest nsgit release: HTTP ${response.status}`);
+        throw new Error(`Failed to resolve nsgit ${tag}: HTTP ${response.status}`);
     }
-    return (await response.json());
+    const manifest = (await response.json());
+    if (manifest.tool !== "nsgit" || manifest.version !== tag) {
+        throw new Error(`Unexpected release manifest for nsgit ${tag}`);
+    }
+    return {
+        version: tag,
+        tarballs: manifest.artifacts.map((artifact) => ({
+            os: artifact.os,
+            arch: artifact.arch,
+            url: `${baseURL}/${artifact.filename}`,
+            sha256: artifact.sha256,
+        })),
+    };
 }
 function selectTarball(release, platform, architecture) {
     const os = { linux: "LINUX", darwin: "DARWIN", win32: "WINDOWS" }[platform];
@@ -35237,7 +35263,7 @@ async function run() {
         workflowSha: process.env.GITHUB_SHA || "",
         workspace: process.env.GITHUB_WORKSPACE || "",
     });
-    const executable = await installNsgit(await latestRelease());
+    const executable = await installNsgit(await resolveRelease(getInput("nsgit-version", { required: true })));
     await exec_exec(`"${executable}"`, args);
 }
 run().catch((error) => {

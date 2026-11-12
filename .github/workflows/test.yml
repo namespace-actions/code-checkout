@@ -38,10 +38,13 @@ jobs:
           test -f action.yml
       - uses: ./action
         with:
-          path: cached
-      - name: Verify checkout with cached nsgit
-        working-directory: cached
-        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          nsgit-version: v0.1.52
+          path: overridden
+      - name: Verify checkout with overridden nsgit version
+        working-directory: overridden
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(command -v nsgit)" = "$RUNNER_TOOL_CACHE/nsgit/0.1.52/x64/nsgit"
   snapshot-windows:
     runs-on: nscloud-windows-2022-amd64-8x16
     steps:
@@ -75,6 +78,7 @@ jobs:
           $env:INPUT_REPOSITORY = $env:GITHUB_REPOSITORY
           $env:INPUT_REF = $env:GITHUB_SHA
           $env:INPUT_PATH = "."
+          ${env:INPUT_NSGIT-VERSION} = "v0.1.53"
           $env:RUNNER_TOOL_CACHE = Join-Path $env:RUNNER_TEMP "tool cache"
           node (Join-Path $actionPath "dist\main\index.js")
           if ($LASTEXITCODE -ne 0) { throw "Bundled action failed" }
