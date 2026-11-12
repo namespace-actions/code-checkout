@@ -77,12 +77,12 @@ test("pinned releases, checksum rejection, executable install, and cache reuse",
   assert.equal((await stat(cached)).mtimeMs, before.mtimeMs);
   assert.deepEqual(await readdir(process.env.RUNNER_TEMP), []);
 
-  const otherRelease = await resolveRelease("v0.1.53");
-  assert.equal(otherRelease.version, "v0.1.53");
+  const otherRelease = await resolveRelease("v0.1.54");
+  assert.equal(otherRelease.version, "v0.1.54");
   const otherExecutable = await installNsgit(otherRelease);
   assert.equal(
     path.basename(path.dirname(path.dirname(otherExecutable))),
-    "0.1.53",
+    "0.1.54",
   );
   assert.match(
     execFileSync(otherExecutable, ["clone", "--help"], { encoding: "utf8" }),
